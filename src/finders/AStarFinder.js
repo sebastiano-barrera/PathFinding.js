@@ -13,6 +13,8 @@ var Heuristic  = require('../core/Heuristic');
  *     (defaults to manhattan).
  * @param {integer} opt.weight Weight to apply to the heuristic to allow for suboptimal paths, 
  *     in order to speed up the search.
+ * @param {integer} opt.weight Weight to apply to the heuristic, representing "how much" does 
+ *     slope cost (0 = height is not considered).
  */
 function AStarFinder(opt) {
     opt = opt || {};
@@ -20,6 +22,7 @@ function AStarFinder(opt) {
     this.dontCrossCorners = opt.dontCrossCorners;
     this.heuristic = opt.heuristic || Heuristic.manhattan;
     this.weight = opt.weight || 1;
+    this.slopeHeight = opt.heightWeight || 0;
 }
 
 /**
@@ -37,6 +40,7 @@ AStarFinder.prototype.findPath = function(startX, startY, endX, endY, grid) {
         allowDiagonal = this.allowDiagonal,
         dontCrossCorners = this.dontCrossCorners,
         weight = this.weight,
+        slopeWeight = this.slopeWeight,
         abs = Math.abs, SQRT2 = Math.SQRT2,
         node, neighbors, neighbor, i, l, x, y, ng;
 
@@ -73,7 +77,9 @@ AStarFinder.prototype.findPath = function(startX, startY, endX, endY, grid) {
 
             // get the distance between current node and the neighbor
             // and calculate the next g score
-            ng = node.g + ((x - node.x === 0 || y - node.y === 0) ? 1 : SQRT2);
+            ng = node.g
+		+ ((x - node.x === 0 || y - node.y === 0) ? 1 : SQRT2)
+		+ slopeWeight * (neighbor.h - node.h);
 
             // check if the neighbor has not been inspected yet, or
             // can be reached with smaller cost from the current node
@@ -82,7 +88,7 @@ AStarFinder.prototype.findPath = function(startX, startY, endX, endY, grid) {
                 neighbor.h = neighbor.h || weight * heuristic(abs(x - endX), abs(y - endY));
                 neighbor.f = neighbor.g + neighbor.h;
                 neighbor.parent = node;
-
+		
                 if (!neighbor.opened) {
                     openList.push(neighbor);
                     neighbor.opened = true;

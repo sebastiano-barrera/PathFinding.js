@@ -112,6 +112,28 @@ Grid.prototype.setWalkableAt = function(x, y, walkable) {
     this.nodes[y][x].walkable = walkable;
 };
 
+/**
+ * Paint a "hill" in the grid.
+ * The heights of the nodes around the given one (parameters cx and cy)
+ * are increased by an amount inversely proportional to the distance from it.
+ */
+Grid.prototype.paintHill = function(cx, cy, radius, maxHeight) {
+    var minx = cx - radius;
+    var miny = cy - radius;
+    var maxx = cx + radius;
+    var maxy = cy + radius;
+    
+    var x, y, dx, dy, dist;
+    for (y=miny; y <= maxy; y++) {
+	for (x=minx; x <= maxx; x++) {
+	    dx = x - cx;
+	    dy = y - cy;
+	    dist = Math.sqrt(dx * dx, dy * dy);
+	    
+	    this.nodes[y][x].h += Math.sin(Math.acos(x));
+	}
+    }
+};
 
 /**
  * Get the neighbors of the given node.

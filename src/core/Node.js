@@ -23,6 +23,12 @@ function Node(x, y, walkable) {
      * @type boolean
      */
     this.walkable = (walkable === undefined ? true : walkable);
+    /**
+     * Height of this node.
+     * @type number
+     */
+    this.h = 0;
 };
+
 
 module.exports = Node;
