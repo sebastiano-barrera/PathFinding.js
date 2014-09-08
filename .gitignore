@@ -2,3 +2,6 @@
 node_modules/
 /lib
 /visual/lib/pathfinding-browser.min.js
+/src/finders/.tern-port
+/visual/.tern-port
+/visual/lib/pathfinding-browser.js
