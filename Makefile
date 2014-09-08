@@ -2,9 +2,16 @@ SRC = $(shell find src -name "*.js" -type f)
 TEST_TIMEOUT = 2000
 TEST_REPORTER = spec
 
+all: lib/pathfinding-browser.js visual
+
 lib/pathfinding-browser.js: $(SRC)
 	@mkdir -p lib
 	@node utils/build.js
+
+visual: visual/lib/pathfinding-browser.min.js
+
+visual/lib/pathfinding-browser.min.js: lib/pathfinding-browser.js
+	@cp -v $^ visual/lib/pathfinding-browser.min.js
 
 test:
 	@NODE_ENV=test \
