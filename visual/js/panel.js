@@ -19,7 +19,14 @@ var Panel = {
             top: $algo.offset().top + $algo.outerHeight() + 20
         });
         $('#button2').attr('disabled', 'disabled');
+
+	Panel.currentTool = $("#tool-select").val();
+	$("#tool-select").change(function(event) {
+	    Panel.currentTool = event.target.value;
+	});
     },
+
+
     /**
      * Get the user selected path-finder.
      * TODO: clean up this messy code.
@@ -55,11 +62,13 @@ var Panel = {
                     weight: weight
                 });
             } else {
+		var slopeWeight = parseInt($('#astar_section #slope-weight').val()) || 1;
                 finder = new PF.AStarFinder({
                     allowDiagonal: allowDiagonal,
                     dontCrossCorners: dontCrossCorners,
                     heuristic: PF.Heuristic[heuristic],
-                    weight: weight
+                    weight: weight,
+		    slopeWeight: slopeWeight
                 });
             }
             break;

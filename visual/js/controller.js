@@ -83,8 +83,13 @@ var Controller = StateMachine.create({
             to:   'erasingWall'
         },
         {
+            name: 'startPainting',
+            from: ['ready', 'finished'],
+            to: 'painting',
+        },
+        {
             name: 'rest',
-            from: ['draggingStart', 'draggingEnd', 'drawingWall', 'erasingWall'],
+            from: ['draggingStart', 'draggingEnd', 'drawingWall', 'erasingWall', 'painting'],
             to  : 'ready'
         },
     ],
@@ -93,6 +98,7 @@ var Controller = StateMachine.create({
 $.extend(Controller, {
     gridSize: [64, 36], // number of nodes horizontally and vertically
     operationsPerSecond: 300,
+    paintRadius: 2,
 
     /**
      * Asynchronous transition from `none` state to `ready` state.
@@ -128,6 +134,10 @@ $.extend(Controller, {
         this.setWalkableAt(gridX, gridY, true);
         // => erasingWall
     },
+    onstartPainting: function(event, form, to, gridX, gridY) {
+        console.log("=> startPainting");
+        this.paintAt(gridX, gridY);
+    },
     onsearch: function(event, from, to) {
         var grid,
             timeStart, timeEnd,
@@ -142,6 +152,7 @@ $.extend(Controller, {
         timeEnd = window.performance ? performance.now() : Date.now();
         this.timeSpent = (timeEnd - timeStart).toFixed(4);
 
+	View.clearLabels();
         this.loop();
         // => searching
     },
@@ -317,7 +328,7 @@ $.extend(Controller, {
                     x: this.x,
                     y: this.y,
                     attr: 'closed',
-                    value: v
+                    value: v && this.f
                 });
             },
             get tested() {
@@ -395,12 +406,24 @@ $.extend(Controller, {
             this.dragEnd();
             return;
         }
-        if (this.can('drawWall') && grid.isWalkableAt(gridX, gridY)) {
-            this.drawWall(gridX, gridY);
-            return;
-        }
-        if (this.can('eraseWall') && !grid.isWalkableAt(gridX, gridY)) {
-            this.eraseWall(gridX, gridY);
+        
+        switch (Panel.currentTool) {
+        case 'draw-wall':
+            if (this.can('drawWall') && grid.isWalkableAt(gridX, gridY)) {
+                this.drawWall(gridX, gridY);
+                return;
+            }
+            if (this.can('eraseWall') && !grid.isWalkableAt(gridX, gridY)) {
+                this.eraseWall(gridX, gridY);
+                return;
+            }
+            break;
+        case 'paint-hill':
+            if (this.can('startPainting')) {
+                this.startPainting(gridX, gridY);
+                return;
+            }
+            break;
         }
     },
     mousemove: function(event) {
@@ -415,20 +438,21 @@ $.extend(Controller, {
 
         switch (this.current) {
         case 'draggingStart':
-            if (grid.isWalkableAt(gridX, gridY)) {
+            if (grid.isWalkableAt(gridX, gridY))
                 this.setStartPos(gridX, gridY);
-            }
             break;
         case 'draggingEnd':
-            if (grid.isWalkableAt(gridX, gridY)) {
+            if (grid.isWalkableAt(gridX, gridY))
                 this.setEndPos(gridX, gridY);
-            }
             break;
         case 'drawingWall':
             this.setWalkableAt(gridX, gridY, false);
             break;
         case 'erasingWall':
             this.setWalkableAt(gridX, gridY, true);
+            break;
+        case 'painting':
+            this.paintAt(gridX, gridY);
             break;
         }
     },
@@ -494,6 +518,17 @@ $.extend(Controller, {
     setWalkableAt: function(gridX, gridY, walkable) {
         this.grid.setWalkableAt(gridX, gridY, walkable);
         View.setAttributeAt(gridX, gridY, 'walkable', walkable);
+    },
+    paintAt: function(gridX, gridY) {
+        var radius = this.paintRadius;
+        this.grid.paintHill(gridX, gridY, radius, 10);
+	View.setAttributeRect(gridX - radius, gridY - radius,
+                              gridX + radius, gridY + radius,
+			      'height',
+                              this.grid.nodes,
+			      function (node) {
+				  return Math.floor(node.height);
+			      });
     },
     isStartPos: function(gridX, gridY) {
         return gridX === this.startX && gridY === this.startY;

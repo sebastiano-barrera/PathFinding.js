@@ -123,14 +123,21 @@ Grid.prototype.paintHill = function(cx, cy, radius, maxHeight) {
     var maxx = cx + radius;
     var maxy = cy + radius;
     
-    var x, y, dx, dy, dist;
+    if (minx < 0) minx = 0;
+    if (miny < 0) miny = 0;
+    if (maxx > this.width-1) maxx = this.width-1;
+    if (maxy > this.height-1) maxy = this.height-1;
+
+    var x, y, dx, dy, dist, angle;
     for (y=miny; y <= maxy; y++) {
 	for (x=minx; x <= maxx; x++) {
 	    dx = x - cx;
 	    dy = y - cy;
-	    dist = Math.sqrt(dx * dx, dy * dy);
-	    
-	    this.nodes[y][x].h += Math.sin(Math.acos(x));
+	    dist = Math.sqrt(dx * dx + dy * dy);
+	    if (dist < radius) {
+	        angle = Math.acos( dist / radius );
+	        this.nodes[y][x].height += Math.sin(angle) * maxHeight;
+            }
 	}
     }
 };

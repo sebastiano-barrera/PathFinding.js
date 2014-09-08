@@ -8,6 +8,9 @@ input {
     cursor: pointer;
 }
 
+::selection { background: none; }
+::-moz-selection { background: none; }
+
 h1, h2, h3, h4, h5, h6 {
     margin: 0px;
     padding: 0px;
@@ -20,7 +23,6 @@ h1, h2, h3, h4, h5, h6 {
     padding-bottom: 5px;
     margin-top: -10px;
 }
-
 
 .panel {
     position: fixed;

@@ -51,6 +51,7 @@ var View = {
         'stroke-width': 3,
     },
     supportedOperations: ['opened', 'closed', 'tested'],
+    maxHeight: 300,
     init: function(opts) {
         this.numCols      = opts.numCols;
         this.numRows      = opts.numRows;
@@ -74,7 +75,8 @@ var View = {
             numRows     = this.numRows,
             paper       = this.paper,
             rects       = this.rects = [],
-            $stats      = this.$stats;
+            $stats      = this.$stats,
+            text;
 
         paper.setSize(numCols * nodeSize, numRows * nodeSize);
 
@@ -84,10 +86,13 @@ var View = {
                 for (j = 0; j < numCols; ++j) {
                     x = j * nodeSize;
                     y = rowId * nodeSize;
-
+                    
                     rect = paper.rect(x, y, nodeSize, nodeSize);
                     rect.attr(normalStyle);
                     rects[rowId].push(rect);
+
+                    rect.label = paper.text(x + nodeSize/2, y + nodeSize/2, "");
+                    rect.label.attr('fill', 'black');
                 }
                 $stats.text(
                     'generating grid ' +
@@ -143,6 +148,24 @@ var View = {
             this.endNode.attr({ x: coord[0], y: coord[1] }).toFront();
         }
     },
+
+    setAttributeRect: function(minx, miny, maxx, maxy, attr, valueMatrix, keyFn) {
+        if (minx < 0) minx = 0;
+        if (miny < 0) miny = 0;
+        if (maxx > this.numCols - 1)
+            maxx = this.numCols - 1;
+        if (maxy > this.numRows - 1)
+            maxx = this.numRows - 1;
+        
+        var x, y, val;
+        for(y=miny; y <= maxy; y++) {
+            for(x=minx; x <= maxx; x++) {
+                val = keyFn(valueMatrix[y][x]);
+                this.setAttributeAt(x, y, attr, val);
+            }
+        }
+    },
+    
     /**
      * Set the attribute of the node at the given coordinate.
      */
@@ -160,12 +183,19 @@ var View = {
         case 'closed':
             this.colorizeNode(this.rects[gridY][gridX], nodeStyle.closed.fill);
             this.setCoordDirty(gridX, gridY, true);
+            this.rects[gridY][gridX].label.attr('text',
+                                                value ? value.toFixed(2) : '-');
             break;
         case 'tested':
             color = (value === true) ? nodeStyle.tested.fill : nodeStyle.normal.fill;
-
             this.colorizeNode(this.rects[gridY][gridX], color);
             this.setCoordDirty(gridX, gridY, true);
+            break;
+        case 'height':
+            color = Raphael.hsl( 246,
+                                 100,
+                                 100.0 - 50.0 * Math.min(value,300) / 300.0 );
+            this.colorizeNode(this.rects[gridY][gridX], color);
             break;
         case 'parent':
             // XXX: Maybe draw a line from this node to its parent?
@@ -238,6 +268,14 @@ var View = {
                     blockedNodes[i][j].remove();
                     blockedNodes[i][j] = null;
                 }
+            }
+        }
+    },
+    clearLabels: function() {
+	var i, j;
+	for (i = 0; i < this.numRows; ++i) {
+            for (j = 0 ;j < this.numCols; ++j) {
+		this.rects[i][j].label.attr('text', '');
             }
         }
     },

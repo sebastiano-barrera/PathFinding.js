@@ -3,7 +3,7 @@ $(document).ready(function() {
         window.location = './notsupported.html';
     }
 
-    // suppress select events
+    // suppress text select events
     $(window).bind('selectstart', function(event) {
         event.preventDefault();
     });

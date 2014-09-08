@@ -27,7 +27,7 @@ function Node(x, y, walkable) {
      * Height of this node.
      * @type number
      */
-    this.h = 0;
+    this.height = 0;
 };
 
 
