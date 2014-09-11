@@ -14,6 +14,16 @@ It comes along with an [online demo](http://qiao.github.com/PathFinding.js/visua
 
 Note that this project only provides path-finding algorithms for 2D space. If you need to work in a 3D environment, then you may use [@schteppe](https://github.com/schteppe)'s [fork](https://github.com/schteppe/PathFinding3D.js).
 
+The main web application
+--------------------
+
+In order to use the main web application, it is _necessary_, first of all, to install the necessary dependencies from npm, then run `make` command to build the `pathfinding-browser.js` file and place it in the appropriate path:
+
+```sh
+$ npm install
+$ make
+```
+
 Server
 ------
 
