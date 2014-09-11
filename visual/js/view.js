@@ -222,6 +222,10 @@ var View = {
                                  100.0 - 50.0 * Math.min(height,300) / 300.0 );
 	var rect = this.rects[gridY][gridX];
         this.colorizeNode(rect, color);
+
+	if (height == 0)
+	    height = "";
+
 	if (!rect.heightLabel) {
 	    rect.heightLabel = this.paper.text(rect.attrs.x + rect.attrs.width - 2,
 					       rect.attrs.y + rect.attrs.height / 4,

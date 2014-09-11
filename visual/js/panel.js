@@ -5,7 +5,7 @@ var Panel = {
     init: function() {
         var $algo = $('#algorithm_panel');
 
-        $('.panel').draggable();
+        // $('.panel').draggable();
         $('.accordion').accordion({
             collapsible: false,
         });
@@ -19,6 +19,12 @@ var Panel = {
             top: $algo.offset().top + $algo.outerHeight() + 20
         });
         $('#button2').attr('disabled', 'disabled');
+	
+	$('#brush-depth-neg').click(function() {
+	    var spinner = $('#brush-depth');
+	    var oldVal = spinner.val();
+	    spinner.val( -oldVal );
+	});
 
 	Panel.currentTool = $("#tool-select").val();
 	$("#tool-select").change(function(event) {

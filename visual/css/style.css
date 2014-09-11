@@ -150,9 +150,9 @@ footer {
     list-style-type: none;
 }
 
-#tools li * { 
-    display: inline-block; 
-    width: 3cm;
+#tools li > * { 
+    display: inline-block;
+    width: 2.5cm;
 }
 
 #tools li label {
@@ -160,6 +160,5 @@ footer {
     text-align: right;
 }
 
-#brush-depth {
-    width: 1.5cm;
-}
+#brush-depth { width: 1.2cm; }
+#brush-depth-neg { width: 0.8cm; }
