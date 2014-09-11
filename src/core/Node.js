@@ -6,8 +6,9 @@
  * @param {number} x - The x coordinate of the node on the grid.
  * @param {number} y - The y coordinate of the node on the grid.
  * @param {boolean} [walkable] - Whether this node is walkable.
+ * @param {number} height - The height (or z coordinate) of the node on the grid.
  */
-function Node(x, y, walkable) {
+function Node(x, y, walkable, height) {
     /**
      * The x coordinate of the node on the grid.
      * @type number
@@ -27,8 +28,17 @@ function Node(x, y, walkable) {
      * Height of this node.
      * @type number
      */
-    this.height = 0;
+    this.height = height || 0;
+    
 };
+
+Node.prototype.clone = function() {
+    return new Node(this.x,
+		    this.y,
+		    this.walkable,
+		    this.height);
+};
+
 
 
 module.exports = Node;

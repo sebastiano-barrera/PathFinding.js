@@ -127,16 +127,19 @@ Grid.prototype.paintHill = function(cx, cy, radius, maxHeight) {
     if (miny < 0) miny = 0;
     if (maxx > this.width-1) maxx = this.width-1;
     if (maxy > this.height-1) maxy = this.height-1;
-
-    var x, y, dx, dy, dist, angle;
+    
+    var x, y, dx, dy, dist, angle, node;
     for (y=miny; y <= maxy; y++) {
 	for (x=minx; x <= maxx; x++) {
 	    dx = x - cx;
 	    dy = y - cy;
 	    dist = Math.sqrt(dx * dx + dy * dy);
+	    node = this.nodes[y][x];
 	    if (dist < radius) {
 	        angle = Math.acos( dist / radius );
-	        this.nodes[y][x].height += Math.sin(angle) * maxHeight;
+	        node.height += Math.sin(angle) * maxHeight;
+		if (node.height < 0)
+		    node.height = 0;
             }
 	}
     }
@@ -247,7 +250,7 @@ Grid.prototype.clone = function() {
     for (i = 0; i < height; ++i) {
         newNodes[i] = new Array(width);
         for (j = 0; j < width; ++j) {
-            newNodes[i][j] = new Node(j, i, thisNodes[i][j].walkable);
+            newNodes[i][j] = thisNodes[i][j].clone();
         }
     }
 
