@@ -99,6 +99,7 @@ $.extend(Controller, {
     gridSize: [64, 36], // number of nodes horizontally and vertically
     operationsPerSecond: 300,
     paintRadius: 2,
+    brushDepth: 10,
 
     /**
      * Asynchronous transition from `none` state to `ready` state.
@@ -109,19 +110,17 @@ $.extend(Controller, {
 
         this.grid = new PF.Grid(numCols, numRows);
 
+        this.$buttons = $('.control_button');
+        this.hookPathFinding();
+
         View.init({
             numCols: numCols,
             numRows: numRows
-        });
-        View.generateGrid(function() {
-            Controller.setDefaultStartEndPos();
+        }, function() {
+	    Controller.setDefaultStartEndPos();
             Controller.bindEvents();
             Controller.transition(); // transit to the next state (ready)
-        });
-
-        this.$buttons = $('.control_button');
-
-        this.hookPathFinding();
+	});
 
         return StateMachine.ASYNC;
         // => ready
@@ -136,6 +135,7 @@ $.extend(Controller, {
     },
     onstartPainting: function(event, form, to, gridX, gridY) {
         console.log("=> startPainting");
+	this.brushDepth = $("#brush-depth").val() || this.brushDepth;
         this.paintAt(gridX, gridY);
     },
     onsearch: function(event, from, to) {
@@ -152,7 +152,6 @@ $.extend(Controller, {
         timeEnd = window.performance ? performance.now() : Date.now();
         this.timeSpent = (timeEnd - timeStart).toFixed(4);
 
-	View.clearLabels();
         this.loop();
         // => searching
     },
@@ -521,7 +520,7 @@ $.extend(Controller, {
     },
     paintAt: function(gridX, gridY) {
         var radius = this.paintRadius;
-        this.grid.paintHill(gridX, gridY, radius, 10);
+        this.grid.paintHill(gridX, gridY, radius, this.brushDepth);
 	View.setAttributeRect(gridX - radius, gridY - radius,
                               gridX + radius, gridY + radius,
 			      'height',
@@ -529,6 +528,7 @@ $.extend(Controller, {
 			      function (node) {
 				  return Math.floor(node.height);
 			      });
+	
     },
     isStartPos: function(gridX, gridY) {
         return gridX === this.startX && gridY === this.startY;

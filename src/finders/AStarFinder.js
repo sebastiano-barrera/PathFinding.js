@@ -64,7 +64,7 @@ AStarFinder.prototype.findPath = function(startX, startY, endX, endY, grid) {
         }
 
         // get neigbours of the current node
-	neighbors = grid.getNeighbors(node, allowDiagonal, dontCrossCorners);
+        neighbors = grid.getNeighbors(node, allowDiagonal, dontCrossCorners);
         for (i = 0, l = neighbors.length; i < l; ++i) {
             neighbor = neighbors[i];
 
@@ -77,33 +77,24 @@ AStarFinder.prototype.findPath = function(startX, startY, endX, endY, grid) {
 
             // get the distance between current node and the neighbor
             // and calculate the next g score
-	    if (true) {
-		ng = node.g + Math.hypot(x - node.x, y - node.y);
-	    } else {
-		hypotxy = Math.hypot(x - node.x, y - node.y);
-		ng = node.g
-		    + Math.hypot(hypotxy, 
-				 weight * (neighbor.height - node.height));
-	    }
-	    
+            hypotxy = heuristic(x - node.x, y - node.y);
+            ng = node.g
+                + heuristic(weight * hypotxy, 
+                             slopeWeight * abs(neighbor.height - node.height));
+            
             // check if the neighbor has not been inspected yet, or
             // can be reached with smaller cost from the current node
             if (!neighbor.opened || ng < neighbor.g) {
                 neighbor.g = ng;
-		if (true) {
-		    neighbor.h = neighbor.h || 
-			weight * heuristic(abs(x - endX), abs(y - endY));
-		} else {
-		    hypotxy = heuristic(abs(x - endX), abs(y - endY));
-                    neighbor.h = neighbor.h || 
-			(weight *
-			 heuristic(hypotxy,
-				   endNode.height - neighbor.height));
-		}
-		
+
+                hypotxy = heuristic(abs(x - endX), abs(y - endY));
+                neighbor.h = neighbor.h ||
+                    (weight * heuristic(hypotxy,
+                                        Math.max(0, endNode.height - neighbor.height)));
+                
                 neighbor.f = neighbor.g + neighbor.h;
                 neighbor.parent = node;
-		
+                
                 if (!neighbor.opened) {
                     openList.push(neighbor);
                     neighbor.opened = true;

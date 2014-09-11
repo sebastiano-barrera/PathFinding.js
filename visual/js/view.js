@@ -3,6 +3,8 @@
  * It uses raphael.js to show the grids.
  */
 var View = {
+    isSupported: function() { return Raphael.svg ? true : false; },
+
     nodeSize: 30, // width and height of a single node, in pixel
     nodeStyle: {
         normal: {
@@ -34,7 +36,7 @@ var View = {
             'stroke-opacity': 0.2,
         },
         tested: {
-            fill: '#e5e5e5',
+            fill: 'orange', // '#e5e5e5',
             'stroke-opacity': 0.2,
         },
     },
@@ -52,11 +54,13 @@ var View = {
     },
     supportedOperations: ['opened', 'closed', 'tested'],
     maxHeight: 300,
-    init: function(opts) {
+    init: function(opts, callback) {
         this.numCols      = opts.numCols;
         this.numRows      = opts.numRows;
         this.paper        = Raphael('draw_area');
         this.$stats       = $('#stats');
+
+	this.generateGrid(callback);
     },
     /**
      * Generate the grid asynchronously.
@@ -75,8 +79,7 @@ var View = {
             numRows     = this.numRows,
             paper       = this.paper,
             rects       = this.rects = [],
-            $stats      = this.$stats,
-            text;
+            $stats      = this.$stats;
 
         paper.setSize(numCols * nodeSize, numRows * nodeSize);
 
@@ -90,9 +93,6 @@ var View = {
                     rect = paper.rect(x, y, nodeSize, nodeSize);
                     rect.attr(normalStyle);
                     rects[rowId].push(rect);
-
-                    rect.label = paper.text(x + nodeSize/2, y + nodeSize/2, "");
-                    rect.label.attr('fill', 'black');
                 }
                 $stats.text(
                     'generating grid ' +
@@ -114,7 +114,7 @@ var View = {
             tasks.push(sleep);
         }
 
-        async.series(tasks, function() {
+        async.parallel(tasks, function() {
             if (callback) {
                 callback();
             }
@@ -170,46 +170,83 @@ var View = {
      * Set the attribute of the node at the given coordinate.
      */
     setAttributeAt: function(gridX, gridY, attr, value) {
-        var color, nodeStyle = this.nodeStyle;
+        var nodeStyle = this.nodeStyle, color;
         switch (attr) {
         case 'walkable':
+	    /// TODO Maybe remove this one statement?
             color = value ? nodeStyle.normal.fill : nodeStyle.blocked.fill;
             this.setWalkableAt(gridX, gridY, value);
             break;
         case 'opened':
-            this.colorizeNode(this.rects[gridY][gridX], nodeStyle.opened.fill);
+            this.colorizeCircle(this.rects[gridY][gridX], nodeStyle.opened.fill);
             this.setCoordDirty(gridX, gridY, true);
             break;
         case 'closed':
-            this.colorizeNode(this.rects[gridY][gridX], nodeStyle.closed.fill);
-            this.setCoordDirty(gridX, gridY, true);
-            this.rects[gridY][gridX].label.attr('text',
-                                                value ? value.toFixed(2) : '-');
-            break;
+	    return this.setClosedAt(gridX, gridY, value);
         case 'tested':
             color = (value === true) ? nodeStyle.tested.fill : nodeStyle.normal.fill;
-            this.colorizeNode(this.rects[gridY][gridX], color);
+            this.colorizeCircle(this.rects[gridY][gridX], color);
             this.setCoordDirty(gridX, gridY, true);
             break;
         case 'height':
-            color = Raphael.hsl( 246,
-                                 100,
-                                 100.0 - 50.0 * Math.min(value,300) / 300.0 );
-            this.colorizeNode(this.rects[gridY][gridX], color);
-            break;
+	    return this.setHeightAt(gridX, gridY, value);
         case 'parent':
             // XXX: Maybe draw a line from this node to its parent?
             // This would be expensive.
             break;
         default:
             console.error('unsupported operation: ' + attr + ':' + value);
-            return;
-        }
+            break;
+	}
+    },
+    setClosedAt: function(gridX, gridY, weight) {
+	var rect = this.rects[gridY][gridX];
+	var text = weight ? weight.toFixed(1) : '-';
+
+        this.colorizeCircle(rect, this.nodeStyle.closed.fill);
+        this.setCoordDirty(gridX, gridY, true);
+
+	if (!rect.weightLabel) {
+	    rect.weightLabel = this.paper.text(rect.attrs.x + 2,
+					       rect.attrs.y + rect.attrs.height * 3 / 4,
+					       text);
+	    rect.weightLabel.attr('fill', 'black');
+	    rect.weightLabel.attr('text-anchor', 'start');
+	} else {
+	    rect.weightLabel.attr('text', text);
+	}
+    },
+    setHeightAt: function(gridX, gridY, height) {
+        var color = Raphael.hsl( 246,
+				 100,
+                                 100.0 - 50.0 * Math.min(height,300) / 300.0 );
+	var rect = this.rects[gridY][gridX];
+        this.colorizeNode(rect, color);
+	if (!rect.heightLabel) {
+	    rect.heightLabel = this.paper.text(rect.attrs.x + rect.attrs.width - 2,
+					       rect.attrs.y + rect.attrs.height / 4,
+					       height);
+	    rect.heightLabel.attr('fill', 'black');
+	    rect.heightLabel.attr('text-anchor', 'end');
+	} else {
+	    rect.heightLabel.attr('text', height);
+	}
     },
     colorizeNode: function(node, color) {
         node.animate({
             fill: color
         }, this.nodeColorizeEffect.duration);
+    },
+    colorizeCircle: function(node, color) {
+	if (!node.circle) {
+	    node.circle = this.paper.circle(node.attrs.x + node.attrs.width / 2,
+					    node.attrs.y + node.attrs.height / 2,
+					    node.attrs.width / 5);
+	    node.circle.attr('stroke-opacity', 0.4);
+	}
+	
+	node.circle.animate({ fill: color },
+			    this.nodeColorizeEffect.duration);
     },
     zoomNode: function(node) {
         node.toFront().attr({
@@ -248,12 +285,19 @@ var View = {
         }
     },
     clearFootprints: function() {
-        var i, x, y, coord, coords = this.getDirtyCoords();
+        var i, x, y, coord, rect, coords = this.getDirtyCoords();
         for (i = 0; i < coords.length; ++i) {
             coord = coords[i];
             x = coord[0];
             y = coord[1];
-            this.rects[y][x].attr(this.nodeStyle.normal);
+	    rect = this.rects[y][x];
+            rect.attr(this.nodeStyle.normal);
+	    if (rect.weightLabel)
+		rect.weightLabel.attr('text', '');
+	    if (rect.circle) {
+		rect.circle.remove();
+		rect.circle = null;
+	    }
             this.setCoordDirty(x, y, false);
         }
     },
@@ -268,14 +312,6 @@ var View = {
                     blockedNodes[i][j].remove();
                     blockedNodes[i][j] = null;
                 }
-            }
-        }
-    },
-    clearLabels: function() {
-	var i, j;
-	for (i = 0; i < this.numRows; ++i) {
-            for (j = 0 ;j < this.numCols; ++j) {
-		this.rects[i][j].label.attr('text', '');
             }
         }
     },

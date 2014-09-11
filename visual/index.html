@@ -43,13 +43,28 @@
     </div>
 
     <div id="algorithm_panel" class="panel right_panel">
-      <header><h2 class="header_title">Select Algorithm</h2></header>
 
-      <span>Tool:</span>
-      <select id="tool-select">
-	<option value="paint-hill">Paint hill</option>
-	<option value="draw-wall">Draw wall</option>
-      </select>
+      <div id="play_panel">
+	<button id="button1" class="control_button">Start Search</button>
+	<button id="button2" class="control_button">Pause Search</button>
+	<button id="button3" class="control_button">Clear Walls</button>
+      </div>
+
+      <header><h2 class="header_title">Select Algorithm</h2></header>
+      
+      <ul id="tools">
+	<li>
+	  <label for="tool-select">Tool:</label>
+	  <select id="tool-select">
+	    <option value="paint-hill">Paint hill</option>
+	    <option value="draw-wall">Draw wall</option>
+	  </select>
+	</li>
+	<li>
+	  <label for="brush-depth">Brush depth:</label>
+	  <input type="number" id="brush-depth" value="10" />
+	</li>
+      </ul>
 
       <div class="accordion">
         <h3 id="astar_header"><a href="#">A* + Slope</a></h3>
@@ -242,12 +257,6 @@
 
       </div><!-- .accordion -->
     </div><!-- #algorithm_panel -->
-
-    <div id="play_panel" class="panel right_panel">
-      <button id="button1" class="control_button">Start Search</button>
-      <button id="button2" class="control_button">Pause Search</button>
-      <button id="button3" class="control_button">Clear Walls</button>
-    </div>
 
     <div id="stats"></div>
 
